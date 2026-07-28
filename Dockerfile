@@ -13,7 +13,7 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
-RUN addgroup --gid 1000 paymentmock && adduser --uid 1000 --gid 1000 --disabled-password --gecos "" paymentmock
+RUN groupadd paymentmock && useradd --gid paymentmock --no-create-home paymentmock
 COPY --from=build /app/publish .
 RUN mkdir -p /app/logs && chown -R paymentmock:paymentmock /app
 USER paymentmock
