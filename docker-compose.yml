@@ -1,0 +1,51 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: paymentmock-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-paymentmock}
+      MYSQL_USER: ${MYSQL_USER:-paymentmock}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-paymentmock}
+    ports:
+      - "3306:3306"
+    volumes:
+      - paymentmock_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - paymentmock-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: paymentmock-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      Database__ConnectionString: "Server=mysql;Port=3306;Database=${MYSQL_DATABASE:-paymentmock};Uid=${MYSQL_USER:-paymentmock};Pwd=${MYSQL_PASSWORD:-paymentmock};AllowPublicKeyRetrieval=true;SslMode=None;"
+      # host.docker.internal lets webhook deliveries reach the sibling Romeo compose project's
+      # exposed port without merging the two projects onto one docker network.
+      Gateway__PublicBaseUrl: "http://localhost:8080"
+    ports:
+      - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - paymentmock-network
+
+networks:
+  paymentmock-network:
+    driver: bridge
+
+volumes:
+  paymentmock_mysql_data:

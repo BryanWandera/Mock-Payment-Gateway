@@ -1,0 +1,20 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## Logs
+logs/
+*.log
+
+## Environment
+.env
+
+## OS
+.DS_Store
+
+## IDEs
+CLAUDE.md
+
